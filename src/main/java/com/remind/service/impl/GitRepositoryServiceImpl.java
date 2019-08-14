@@ -63,10 +63,19 @@ public class GitRepositoryServiceImpl implements RepositoryService {
 			return response.getBody();
 		} catch (HttpClientErrorException e) {
 			if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-				log.warn("Service endpoint not found " + userRepoUrl, e);
+				log.error("Service endpoint not found " + userRepoUrl, e);
+				throw new RuntimeException("Failed to GET url " + userRepoUrl, e);
 			}
-			throw new RuntimeException("Failed to GET url " + userRepoUrl, e);
+			if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+				String errorMsg = String.format(
+						"Failed to authorize the url %s. Please refresh the authentication token and retry",
+						userRepoUrl);
+				log.error(errorMsg);
+				throw new RuntimeException(errorMsg, e);
+			}
 		}
+
+		return null;
 	}
 
 }
